@@ -12,7 +12,8 @@ import (
 func main() {
 	baseUrl := "https://www.avanza.se/_api/fund-guide/guide/"
 	//url := "https://www.avanza.se/_api/fund-guide/guide/589935"
-	funds := []string{"589935", "878733", "927735", "1162060", "64710", "1919", "132510", "1140464", "209089"}
+	funds := []string{"589935", "878733", "927735", "1162060", "64710", "1919", "132510", "1140464", "209089", "1011196", "694253",
+		"137448", "2013"}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
@@ -38,7 +39,7 @@ func main() {
 		}
 		// Database
 		var dbFund Fund
-		err = db.Where("id = ?", fund).Find(&dbFund).Error
+		err = db.Where("id = ?", fund).First(&dbFund).Error
 
 		if err == gorm.ErrRecordNotFound {
 			// Insert Fund data if not exist already
