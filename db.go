@@ -7,8 +7,19 @@ import (
 
 type Fund struct {
 	gorm.Model
-	Id   string `gorm:"primary_key"`
-	Name string
+	AvanzaId string //`	gorm:"primary_key"`
+	Name     string
+	Holdings []FundHolding
+}
+
+type FundHolding struct {
+	gorm.Model
+	FundId         uint
+	Date           string
+	Position       int
+	Isin           string
+	Name           string
+	SizePercentage float64
 }
 
 func connectDb() *gorm.DB {
@@ -17,18 +28,9 @@ func connectDb() *gorm.DB {
 		panic("failed to connect database")
 	}
 
-	db.AutoMigrate(&Fund{}, &FundHolding{})
+	db.AutoMigrate(&Fund{})
+	db.AutoMigrate(&FundHolding{})
 	return db
-}
-
-type FundHolding struct {
-	gorm.Model
-	FundId         string
-	Date           string
-	Position       int
-	Isin           string
-	Name           string
-	SizePercentage float64
 }
 
 type Repository interface {

@@ -39,11 +39,11 @@ func main() {
 		}
 		// Database
 		var dbFund Fund
-		err = db.Where("id = ?", fund).First(&dbFund).Error
+		err = db.Where("avanza_id = ?", fund).First(&dbFund).Error
 
 		if err == gorm.ErrRecordNotFound {
 			// Insert Fund data if not exist already
-			dbFund := Fund{Id: fund, Name: data.Name}
+			dbFund := Fund{AvanzaId: fund, Name: data.Name}
 			db.Create(&dbFund)
 		}
 
@@ -51,11 +51,11 @@ func main() {
 		fmt.Println(data.Name)
 
 		var temp FundHolding
-		result := db.Where("fund_id = ? and date = ? ", fund, data.PortfolioDate).Find(&temp)
+		result := db.Where("fund_id = ? and date = ? ", dbFund.ID, data.PortfolioDate).Find(&temp)
 		if result.RowsAffected == 0 {
 			for i, v := range data.HoldingChartData {
 				fh := FundHolding{
-					FundId:         fund,
+					FundId:         dbFund.ID,
 					Date:           data.PortfolioDate,
 					Isin:           v.Isin,
 					SizePercentage: v.Y,
@@ -66,6 +66,5 @@ func main() {
 				db.Create(&fh)
 			}
 		}
-		err = db.Where("id = ?", fund).First(&dbFund).Error
 	}
 }
