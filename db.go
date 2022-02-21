@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -9,7 +11,6 @@ type Fund struct {
 	gorm.Model
 	AvanzaId string //`	gorm:"primary_key"`
 	Name     string
-	Holdings []FundHolding
 }
 
 type FundHolding struct {
@@ -22,15 +23,18 @@ type FundHolding struct {
 	SizePercentage float64
 }
 
-func connectDb() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+var DB *gorm.DB
+
+func connectDb() {
+	log.Println("Connecting Database")
+	var err error
+	DB, err = gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
 
-	db.AutoMigrate(&Fund{})
-	db.AutoMigrate(&FundHolding{})
-	return db
+	DB.AutoMigrate(&Fund{})
+	DB.AutoMigrate(&FundHolding{})
 }
 
 type Repository interface {

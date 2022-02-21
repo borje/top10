@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/gin-gonic/gin"
 	resty "github.com/go-resty/resty/v2"
 	jsoniter "github.com/json-iterator/go"
 	"gorm.io/gorm"
@@ -15,17 +16,33 @@ func main() {
 	funds := []string{"589935", "878733", "927735", "1162060", "64710", "1919", "132510", "1140464", "209089", "1011196", "694253",
 		"137448", "2013"}
 
+	// Database
+	// Insert Fund data if not exist already
+	connectDb()
+	shouldReturn := newFunction(funds, baseUrl)
+	if shouldReturn {
+		return
+	}
+
+	r := gin.Default()
+	r.SetTrustedProxies(nil)
+
+	r.GET("/", testHandler)
+	r.GET("/funds", getFunds)
+
+	r.Run()
+}
+
+func newFunction(funds []string, baseUrl string) bool {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	client := resty.New()
 	client.JSONMarshal = json.Marshal
 	client.JSONUnmarshal = json.Unmarshal
-	db := connectDb()
 
 	for _, fund := range funds {
 		url := baseUrl + fund
-		resp, err := client.R().
-			Get(url)
+		resp, err := client.R().Get(url)
 
 		if err != nil {
 			log.Fatalln("Failed to get data for " + url)
@@ -35,23 +52,23 @@ func main() {
 		err = json.Unmarshal(resp.Body(), &data)
 		if err != nil {
 			fmt.Println(err)
-			return
+			return true
 		}
-		// Database
+
 		var dbFund Fund
-		err = db.Where("avanza_id = ?", fund).First(&dbFund).Error
+		err = DB.Where("avanza_id = ?", fund).First(&dbFund).Error
 
 		if err == gorm.ErrRecordNotFound {
-			// Insert Fund data if not exist already
+
 			dbFund := Fund{AvanzaId: fund, Name: data.Name}
-			db.Create(&dbFund)
+			DB.Create(&dbFund)
 		}
 
 		fmt.Println()
 		fmt.Println(data.Name)
 
 		var temp FundHolding
-		result := db.Where("fund_id = ? and date = ? ", dbFund.ID, data.PortfolioDate).Find(&temp)
+		result := DB.Where("fund_id = ? and date = ? ", dbFund.ID, data.PortfolioDate).Find(&temp)
 		if result.RowsAffected == 0 {
 			for i, v := range data.HoldingChartData {
 				fh := FundHolding{
@@ -63,8 +80,9 @@ func main() {
 					Position:       i,
 				}
 				fmt.Println(i, v.Name, v.Y, "%", v.OrderbookID)
-				db.Create(&fh)
+				DB.Create(&fh)
 			}
 		}
 	}
+	return false
 }
